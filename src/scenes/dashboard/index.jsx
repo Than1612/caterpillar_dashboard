@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
-import { Box, Button, IconButton, Typography, useTheme, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import React, { useState, useMemo } from 'react';
+import { Box, Button, Typography, useTheme, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, IconButton } from "@mui/material"; // Added IconButton here
 import { tokens } from "../../theme";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import FilterListIcon from '@mui/icons-material/FilterList';
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import TrafficIcon from "@mui/icons-material/Traffic";
 import Header from "../../components/Header";
 import LineChart from "../../components/LineChart";
 import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
-import StatBox from "../../components/StatBox";
+// Removed the unused import of StatBox
 import ProgressCircle from "../../components/ProgressCircle";
-import {mockalerts} from "../../data/mockData"
-
+import { mockalerts } from "../../data/mockData";
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -23,6 +18,7 @@ const Dashboard = () => {
   const [selectedMachine, setSelectedMachine] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
   const [selectedParameter, setSelectedParameter] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -39,12 +35,18 @@ const Dashboard = () => {
     setSelectedParameter(event.target.value);
   };
 
-  const filterTransactions = (alerts) => {
-    if (alerts.Probability_Failure !== "High") return false;
-    if (selectedMachine && alerts.Machine !== selectedMachine) return false;
-    if (selectedComponent && alerts.Component !== selectedComponent) return false;
-    if (selectedParameter && alerts.Parameter_x !== selectedParameter) return false;
-    return true;
+  const filteredTransactions = useMemo(() => {
+    return mockalerts.filter((alerts) => {
+      if (alerts.Probability_Failure !== "High") return false;
+      if (selectedMachine && alerts.Machine !== selectedMachine) return false;
+      if (selectedComponent && alerts.Component !== selectedComponent) return false;
+      if (selectedParameter && alerts.Parameter_x !== selectedParameter) return false;
+      return true;
+    });
+  }, [selectedMachine, selectedComponent, selectedParameter]);
+
+  const loadMore = () => {
+    setVisibleCount((prevCount) => prevCount + 10);
   };
 
   return (
@@ -150,8 +152,6 @@ const Dashboard = () => {
         gridAutoRows="140px"
         gap="20px"
       >
-        
-
         {/* ROW 2 */}
         <Box
           gridColumn="span 8"
@@ -211,7 +211,7 @@ const Dashboard = () => {
               Recent Alerts
             </Typography>
           </Box>
-          {mockalerts.filter(filterTransactions).map((transaction, i) => (
+          {filteredTransactions.slice(0, visibleCount).map((transaction, i) => (
             <Box
               key={`${transaction.Id}-${i}`}
               display="flex"
@@ -248,6 +248,22 @@ const Dashboard = () => {
               </Box>
             </Box>
           ))}
+          {visibleCount < filteredTransactions.length && (
+            <Button
+              onClick={loadMore}
+              sx={{
+                backgroundColor: colors.blueAccent[700],
+                color: colors.grey[100],
+                fontSize: "14px",
+                fontWeight: "bold",
+                margin: "20px",
+                display: "block",
+                width: "100%"
+              }}
+            >
+              Load More
+            </Button>
+          )}
         </Box>
 
         {/* ROW 3 */}
