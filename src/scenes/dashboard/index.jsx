@@ -13,46 +13,23 @@ import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
+import {mockalerts} from "../../data/mockData"
 
-const mockTransactions = [
-  {
-    Id: 48,
-    Machine: "Excavator_1",
-    Component: "Engine",
-    Parameter_x: "Temperature",
-    Value: 104,
-    Date: "2022-06-03 00:00:00",
-    Probability_Failure: "High"
-  },
-  {
-    Id: 24,
-    Machine: "Articulated_Truck_1",
-    Component: "Engine",
-    Parameter_x: "Temperature",
-    Value: 104,
-    Date: "2022-05-27 00:00:00",
-    Probability_Failure: "High"
-  },
-  {
-    Id: 26,
-    Machine: "Excavator_1",
-    Component: "Engine",
-    Parameter_x: "Temperature",
-    Value: 93,
-    Date: "2022-06-07 00:00:00",
-    Probability_Failure: "High"
-  }
-];
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [open, setOpen] = useState(false);
+  const [selectedMachine, setSelectedMachine] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
   const [selectedParameter, setSelectedParameter] = useState('');
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const handleMachineChange = (event) => {
+    setSelectedMachine(event.target.value);
+  };
 
   const handleComponentChange = (event) => {
     setSelectedComponent(event.target.value);
@@ -62,9 +39,11 @@ const Dashboard = () => {
     setSelectedParameter(event.target.value);
   };
 
-  const filterTransactions = (transaction) => {
-    if (selectedComponent && transaction.Component !== selectedComponent) return false;
-    if (selectedParameter && transaction.Parameter_x !== selectedParameter) return false;
+  const filterTransactions = (alerts) => {
+    if (alerts.Probability_Failure !== "High") return false;
+    if (selectedMachine && alerts.Machine !== selectedMachine) return false;
+    if (selectedComponent && alerts.Component !== selectedComponent) return false;
+    if (selectedParameter && alerts.Parameter_x !== selectedParameter) return false;
     return true;
   };
 
@@ -105,7 +84,64 @@ const Dashboard = () => {
       </Box>
 
       {/* FILTER DIALOG */}
-      
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Filter Alerts</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="machine-label">Machine</InputLabel>
+            <Select
+              labelId="machine-label"
+              value={selectedMachine}
+              onChange={handleMachineChange}
+            >
+              <MenuItem value="Backhoe_Loader_1">Backhoe_Loader_1</MenuItem>
+              <MenuItem value="Articulated_Truck_1">Articulated_Truck_1</MenuItem>
+              <MenuItem value="Excavator_1">Excavator_1</MenuItem>
+              <MenuItem value="Dozer_1">Dozer_1</MenuItem>
+              <MenuItem value="Asphalt_Paver_1">Asphalt_Paver_1</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="component-label">Component</InputLabel>
+            <Select
+              labelId="component-label"
+              value={selectedComponent}
+              onChange={handleComponentChange}
+            >
+              <MenuItem value="Drive">Drive</MenuItem>
+              <MenuItem value="Engine">Engine</MenuItem>
+              <MenuItem value="Fuel">Fuel</MenuItem>
+              <MenuItem value="Misc">Misc</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="parameter-label">Parameter</InputLabel>
+            <Select
+              labelId="parameter-label"
+              value={selectedParameter}
+              onChange={handleParameterChange}
+            >
+              <MenuItem value="Brake Control">Brake Control</MenuItem>
+              <MenuItem value="Exhaust Gas Temperature">Exhaust Gas Temperature</MenuItem>
+              <MenuItem value="Hydraulic Pump Rate">Hydraulic Pump Rate</MenuItem>
+              <MenuItem value="Level">Level</MenuItem>
+              <MenuItem value="Oil Pressure">Oil Pressure</MenuItem>
+              <MenuItem value="Pedal Sensor">Pedal Sensor</MenuItem>
+              <MenuItem value="Pressure">Pressure</MenuItem>
+              <MenuItem value="Speed">Speed</MenuItem>
+              <MenuItem value="System Voltage">System Voltage</MenuItem>
+              <MenuItem value="Temperature">Temperature</MenuItem>
+              <MenuItem value="Transmission Pressure">Transmission Pressure</MenuItem>
+              <MenuItem value="Water Fuel">Water Fuel</MenuItem>
+              <MenuItem value="Water in Fuel">Water in Fuel</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">Cancel</Button>
+          <Button onClick={handleClose} color="primary">Apply</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* GRID & CHARTS */}
       <Box
@@ -115,6 +151,8 @@ const Dashboard = () => {
         gap="20px"
       >
         
+
+        {/* ROW 2 */}
         <Box
           gridColumn="span 8"
           gridRow="span 2"
@@ -172,52 +210,8 @@ const Dashboard = () => {
             <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
               Recent Alerts
             </Typography>
-            <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>Filter Alerts</DialogTitle>
-            <DialogContent>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="component-label">Component</InputLabel>
-                <Select
-                  labelId="component-label"
-                  value={selectedComponent}
-                  onChange={handleComponentChange}
-                >
-                  <MenuItem value="Drive">Drive</MenuItem>
-                  <MenuItem value="Engine">Engine</MenuItem>
-                  <MenuItem value="Fuel">Fuel</MenuItem>
-                  <MenuItem value="Misc">Misc</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="parameter-label">Parameter</InputLabel>
-                <Select
-                  labelId="parameter-label"
-                  value={selectedParameter}
-                  onChange={handleParameterChange}
-                >
-                  <MenuItem value="Brake Control">Brake Control</MenuItem>
-                  <MenuItem value="Exhaust Gas Temperature">Exhaust Gas Temperature</MenuItem>
-                  <MenuItem value="Hydraulic Pump Rate">Hydraulic Pump Rate</MenuItem>
-                  <MenuItem value="Level">Level</MenuItem>
-                  <MenuItem value="Oil Pressure">Oil Pressure</MenuItem>
-                  <MenuItem value="Pedal Sensor">Pedal Sensor</MenuItem>
-                  <MenuItem value="Pressure">Pressure</MenuItem>
-                  <MenuItem value="Speed">Speed</MenuItem>
-                  <MenuItem value="System Voltage">System Voltage</MenuItem>
-                  <MenuItem value="Temperature">Temperature</MenuItem>
-                  <MenuItem value="Transmission Pressure">Transmission Pressure</MenuItem>
-                  <MenuItem value="Water Fuel">Water Fuel</MenuItem>
-                  <MenuItem value="Water in Fuel">Water in Fuel</MenuItem>
-                </Select>
-              </FormControl>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose} color="primary">Cancel</Button>
-              <Button onClick={handleClose} color="primary">Apply</Button>
-            </DialogActions>
-          </Dialog>
           </Box>
-          {mockTransactions.filter(filterTransactions).map((transaction, i) => (
+          {mockalerts.filter(filterTransactions).map((transaction, i) => (
             <Box
               key={`${transaction.Id}-${i}`}
               display="flex"
@@ -233,6 +227,9 @@ const Dashboard = () => {
                   fontWeight="600"
                 >
                   {transaction.Id}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {transaction.Machine}
                 </Typography>
                 <Typography color={colors.grey[100]}>
                   {transaction.Component}
