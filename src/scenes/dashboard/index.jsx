@@ -7,7 +7,6 @@ import Header from "../../components/Header";
 import LineChart from "../../components/LineChart";
 import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
-// Removed the unused import of StatBox
 import ProgressCircle from "../../components/ProgressCircle";
 import { mockalerts } from "../../data/mockData";
 
@@ -70,18 +69,7 @@ const Dashboard = () => {
             <FilterListIcon sx={{ mr: "10px" }} />
             Filter Alerts
           </Button>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
-          </Button>
+
         </Box>
       </Box>
 
@@ -171,22 +159,17 @@ const Dashboard = () => {
                 fontWeight="600"
                 color={colors.grey[100]}
               >
-                Revenue Generated
+                History of Data
               </Typography>
               <Typography
                 variant="h3"
                 fontWeight="bold"
                 color={colors.greenAccent[500]}
               >
-                $59,342.32
               </Typography>
             </Box>
             <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
+              
             </Box>
           </Box>
           <Box height="250px" m="-20px 0 0 0">
