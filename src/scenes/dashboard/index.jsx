@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Button, Typography, useTheme, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, TextField } from "@mui/material";
 import { tokens } from "../../theme";
+import axios from 'axios'; // Import Axios for making HTTP requests
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Header from "../../components/Header";
 import { mockalerts } from "../../data/mockData";
@@ -20,6 +21,9 @@ const Dashboard = () => {
   const [liveComponent, setLiveComponent] = useState('');
   const [liveValue, setLiveValue] = useState('');
   const [probability, setProbability] = useState('');
+
+  const TELEGRAM_BOT_TOKEN = 'your-telegram-bot-token-here'; // Replace with your Telegram bot token
+  const TELEGRAM_CHAT_ID = 'your-chat-id-here'; // Replace with your chat ID
 
   const handleOpenFilter = () => setOpenFilter(true);
   const handleCloseFilter = () => setOpenFilter(false);
@@ -60,6 +64,20 @@ const Dashboard = () => {
     setLiveValue(event.target.value);
   };
 
+  const sendTelegramNotification = async (message) => {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const params = {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+    };
+    
+    try {
+      await axios.post(url, params);
+    } catch (error) {
+      console.error("Error sending Telegram notification", error);
+    }
+  };
+
   const calculateProbability = () => {
     let failureProbability = 'Low';
 
@@ -92,6 +110,11 @@ const Dashboard = () => {
     }
 
     setProbability(failureProbability);
+
+    if (failureProbability === 'High') {
+      const message = `⚠️ High Probability of Failure Detected ⚠️\nMachine: ${liveMachine}\nParameter: ${liveParameter}\nComponent: ${liveComponent || 'N/A'}\nValue: ${liveValue}`;
+      sendTelegramNotification(message);
+    }
   };
 
   const handleLiveDataSubmit = () => {
