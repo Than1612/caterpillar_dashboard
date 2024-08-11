@@ -117,6 +117,17 @@ export const tokens = (mode) => ({
           800: "#c3c6fd",
           900: "#e1e2fe",
         },
+        yellowAccent: {
+          100: "#f57f17",
+          200: "#f9a825",
+          300: "#fbc02d",
+          400: "#fdd835",
+          500: "#ffeb3b",
+          600: "#ffee58",
+          700: "#fff176",
+          800: "#fff59d",
+          900: "#fff9c4",
+        },
       }),
 });
 
