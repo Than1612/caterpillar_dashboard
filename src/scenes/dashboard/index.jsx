@@ -1,40 +1,104 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Typography, useTheme, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, IconButton } from "@mui/material";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'; // Added for scatter plot
+import { Box, Button, Typography, useTheme, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, TextField } from "@mui/material";
 import { tokens } from "../../theme";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Header from "../../components/Header";
-import LineChart from "../../components/LineChart";
-import GeographyChart from "../../components/GeographyChart";
-import BarChart from "../../components/BarChart";
 import { mockalerts } from "../../data/mockData";
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [openFilterDialog, setOpenFilterDialog] = useState(false);
-  const [openGraphDialog, setOpenGraphDialog] = useState(false);
+  const [openFilter, setOpenFilter] = useState(false);
+  const [openLiveData, setOpenLiveData] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
   const [selectedParameter, setSelectedParameter] = useState('');
-  const [selectedGraphMachine, setSelectedGraphMachine] = useState('');
-  const [selectedGraphComponent, setSelectedGraphComponent] = useState('');
-  const [selectedGraphParameter, setSelectedGraphParameter] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
 
-  const handleFilterOpen = () => setOpenFilterDialog(true);
-  const handleFilterClose = () => setOpenFilterDialog(false);
+  const [liveMachine, setLiveMachine] = useState('');
+  const [liveParameter, setLiveParameter] = useState('');
+  const [liveComponent, setLiveComponent] = useState('');
+  const [liveValue, setLiveValue] = useState('');
+  const [probability, setProbability] = useState('');
 
-  const handleGraphOpen = () => setOpenGraphDialog(true);
-  const handleGraphClose = () => setOpenGraphDialog(false);
+  const handleOpenFilter = () => setOpenFilter(true);
+  const handleCloseFilter = () => setOpenFilter(false);
 
-  const handleMachineChange = (event) => setSelectedMachine(event.target.value);
-  const handleComponentChange = (event) => setSelectedComponent(event.target.value);
-  const handleParameterChange = (event) => setSelectedParameter(event.target.value);
+  const handleOpenLiveData = () => setOpenLiveData(true);
+  const handleCloseLiveData = () => setOpenLiveData(false);
 
-  const handleGraphMachineChange = (event) => setSelectedGraphMachine(event.target.value);
-  const handleGraphComponentChange = (event) => setSelectedGraphComponent(event.target.value);
-  const handleGraphParameterChange = (event) => setSelectedGraphParameter(event.target.value);
+  const handleMachineChange = (event) => {
+    setSelectedMachine(event.target.value);
+  };
+
+  const handleComponentChange = (event) => {
+    setSelectedComponent(event.target.value);
+  };
+
+  const handleParameterChange = (event) => {
+    setSelectedParameter(event.target.value);
+  };
+
+  const handleLiveMachineChange = (event) => {
+    setLiveMachine(event.target.value);
+  };
+
+  const handleLiveParameterChange = (event) => {
+    setLiveParameter(event.target.value);
+    if (event.target.value === 'Temperature') {
+      setLiveComponent(''); // Reset component selection when parameter changes
+    } else {
+      setLiveComponent(''); // Disable component dropdown if not Temperature
+    }
+  };
+
+  const handleLiveComponentChange = (event) => {
+    setLiveComponent(event.target.value);
+  };
+
+  const handleLiveValueChange = (event) => {
+    setLiveValue(event.target.value);
+  };
+
+  const calculateProbability = () => {
+    let failureProbability = 'Low';
+
+    if (liveParameter === 'Oil Pressure' && (liveValue > 65 || liveValue < 25)) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'Speed' && liveValue > 1800) {
+      failureProbability = 'Medium';
+    } else if (liveParameter === 'Temperature' && liveComponent === 'Engine' && liveValue > 105) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'Temperature' && liveComponent === 'Fuel' && liveValue > 400) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'Brake Control' && liveValue < 1) {
+      failureProbability = 'Medium';
+    } else if (liveParameter === 'Transmission Pressure' && (liveValue > 450 || liveValue < 200)) {
+      failureProbability = 'Medium';
+    } else if (liveParameter === 'Pedal Sensor' && liveValue > 4.7) {
+      failureProbability = 'Low';
+    } else if (liveParameter === 'Water Fuel' && liveValue > 1800) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'Fuel Pressure' && (liveValue > 65 || liveValue < 35)) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'System Voltage' && (liveValue > 15 || liveValue < 12)) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'Exhaust Gas Temperature' && liveValue > 365) {
+      failureProbability = 'High';
+    } else if (liveParameter === 'Hydraulic Pump Rate' && liveValue > 125) {
+      failureProbability = 'Medium';
+    } else if (liveParameter === 'Air Filter Pressure Drop' && liveValue < 20) {
+      failureProbability = 'Medium';
+    }
+
+    setProbability(failureProbability);
+  };
+
+  const handleLiveDataSubmit = () => {
+    calculateProbability();
+    setOpenLiveData(false);
+    alert(`Probability of Failure: ${probability}`);
+  };
 
   const filteredTransactions = useMemo(() => {
     return mockalerts.filter((alerts) => {
@@ -46,19 +110,9 @@ const Dashboard = () => {
     });
   }, [selectedMachine, selectedComponent, selectedParameter]);
 
-  const filteredGraphData = useMemo(() => {
-    return mockalerts.filter((alert) => {
-      if (selectedGraphMachine && alert.Machine !== selectedGraphMachine) return false;
-      if (selectedGraphComponent && alert.Component !== selectedGraphComponent) return false;
-      if (selectedGraphParameter && alert.Parameter_x !== selectedGraphParameter) return false;
-      return true;
-    }).map((alert) => ({
-      x: new Date(alert.Date).getTime(),
-      y: alert.Probability_Failure,
-    }));
-  }, [selectedGraphMachine, selectedGraphComponent, selectedGraphParameter]);
-
-  const yAxisTicks = ['Low', 'Medium', 'High'];
+  const loadMore = () => {
+    setVisibleCount((prevCount) => prevCount + 10);
+  };
 
   return (
     <Box m="20px">
@@ -76,41 +130,16 @@ const Dashboard = () => {
               padding: "10px 20px",
               marginRight: "10px",
             }}
-            onClick={handleFilterOpen}
+            onClick={handleOpenFilter}
           >
             <FilterListIcon sx={{ mr: "10px" }} />
             Filter Alerts
-          </Button>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-              marginRight: "10px",
-            }}
-            onClick={handleGraphOpen}
-          >
-            Graph Filtering
-          </Button>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
           </Button>
         </Box>
       </Box>
 
       {/* FILTER DIALOG */}
-      <Dialog open={openFilterDialog} onClose={handleFilterClose}>
+      <Dialog open={openFilter} onClose={handleCloseFilter}>
         <DialogTitle>Filter Alerts</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
@@ -164,68 +193,8 @@ const Dashboard = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleFilterClose} color="primary">Cancel</Button>
-          <Button onClick={handleFilterClose} color="primary">Apply</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* GRAPH FILTER DIALOG */}
-      <Dialog open={openGraphDialog} onClose={handleGraphClose}>
-        <DialogTitle>Graph Filtering</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="graph-machine-label">Machine</InputLabel>
-            <Select
-              labelId="graph-machine-label"
-              value={selectedGraphMachine}
-              onChange={handleGraphMachineChange}
-            >
-              <MenuItem value="Backhoe_Loader_1">Backhoe_Loader_1</MenuItem>
-              <MenuItem value="Articulated_Truck_1">Articulated_Truck_1</MenuItem>
-              <MenuItem value="Excavator_1">Excavator_1</MenuItem>
-              <MenuItem value="Dozer_1">Dozer_1</MenuItem>
-              <MenuItem value="Asphalt_Paver_1">Asphalt_Paver_1</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="graph-component-label">Component</InputLabel>
-            <Select
-              labelId="graph-component-label"
-              value={selectedGraphComponent}
-              onChange={handleGraphComponentChange}
-            >
-              <MenuItem value="Drive">Drive</MenuItem>
-              <MenuItem value="Engine">Engine</MenuItem>
-              <MenuItem value="Fuel">Fuel</MenuItem>
-              <MenuItem value="Misc">Misc</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="graph-parameter-label">Parameter</InputLabel>
-            <Select
-              labelId="graph-parameter-label"
-              value={selectedGraphParameter}
-              onChange={handleGraphParameterChange}
-            >
-              <MenuItem value="Brake Control">Brake Control</MenuItem>
-              <MenuItem value="Exhaust Gas Temperature">Exhaust Gas Temperature</MenuItem>
-              <MenuItem value="Hydraulic Pump Rate">Hydraulic Pump Rate</MenuItem>
-              <MenuItem value="Level">Level</MenuItem>
-              <MenuItem value="Oil Pressure">Oil Pressure</MenuItem>
-              <MenuItem value="Pedal Sensor">Pedal Sensor</MenuItem>
-              <MenuItem value="Pressure">Pressure</MenuItem>
-              <MenuItem value="Speed">Speed</MenuItem>
-              <MenuItem value="System Voltage">System Voltage</MenuItem>
-              <MenuItem value="Temperature">Temperature</MenuItem>
-              <MenuItem value="Transmission Pressure">Transmission Pressure</MenuItem>
-              <MenuItem value="Water Fuel">Water Fuel</MenuItem>
-              <MenuItem value="Water in Fuel">Water in Fuel</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleGraphClose} color="primary">Cancel</Button>
-          <Button onClick={handleGraphClose} color="primary">Apply</Button>
+          <Button onClick={handleCloseFilter} color="primary">Cancel</Button>
+          <Button onClick={handleCloseFilter} color="primary">Apply</Button>
         </DialogActions>
       </Dialog>
 
@@ -236,47 +205,15 @@ const Dashboard = () => {
         gridAutoRows="140px"
         gap="20px"
       >
-        {/* ROW 2 */}
+        {/* ROW 1 */}
         <Box
           gridColumn="span 8"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
         >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
-              >
-                Revenue Generated
-              </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
-                $59,342.32
-              </Typography>
-            </Box>
-            <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
-            </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
-          </Box>
+          {/* Empty Box */}
         </Box>
+
         <Box
           gridColumn="span 4"
           gridRow="span 2"
@@ -295,7 +232,7 @@ const Dashboard = () => {
               Recent Alerts
             </Typography>
           </Box>
-          {filteredTransactions.map((transaction, i) => (
+          {filteredTransactions.slice(0, visibleCount).map((transaction, i) => (
             <Box
               key={`${transaction.Id}-${i}`}
               display="flex"
@@ -332,42 +269,115 @@ const Dashboard = () => {
               </Box>
             </Box>
           ))}
+          {visibleCount < filteredTransactions.length && (
+            <Button
+              onClick={loadMore}
+              sx={{
+                backgroundColor: colors.blueAccent[700],
+                color: colors.grey[100],
+                fontSize: "14px",
+                fontWeight: "bold",
+                margin: "20px",
+                display: "block",
+                width: "100%"
+              }}
+            >
+              Load More
+            </Button>
+          )}
         </Box>
 
-        {/* ROW 3 - Scatter Plot */}
+        {/* ROW 2 */}
         <Box
-          gridColumn="span 12"
-          gridRow="span 4"
+          gridColumn="span 4"
+          gridRow="span 2"
           backgroundColor={colors.primary[400]}
-          p="30px"
+          display="flex"
+          alignItems="center"
+          justifyContent="flex-start"
+          p="20px"
         >
-          <Typography variant="h5" fontWeight="600">
-            Graph Based on Filtering
-          </Typography>
-          <Box height="400px">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  type="number"
-                  dataKey="x"
-                  name="Date"
-                  domain={['auto', 'auto']}
-                  tickFormatter={(unixTime) => new Date(unixTime).toLocaleDateString()}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="y"
-                  name="Probability_Failure"
-                  domain={['Low', 'High']}
-                  ticks={yAxisTicks}
-                />
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter name="Alerts" data={filteredGraphData} fill="#8884d8" />
-              </ScatterChart>
-            </ResponsiveContainer>
-          </Box>
+          <Button
+            sx={{
+              backgroundColor: colors.greenAccent[600],
+              color: colors.grey[100],
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+            }}
+            onClick={handleOpenLiveData}
+          >
+            Add Live Data
+          </Button>
         </Box>
+
+        {/* Live Data Dialog */}
+        <Dialog open={openLiveData} onClose={handleCloseLiveData}>
+          <DialogTitle>Add Live Data</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="live-machine-label">Machine</InputLabel>
+              <Select
+                labelId="live-machine-label"
+                value={liveMachine}
+                onChange={handleLiveMachineChange}
+              >
+                <MenuItem value="Articulated_Truck_1">Articulated_Truck_1</MenuItem>
+                <MenuItem value="Asphalt_Paver_1">Asphalt_Paver_1</MenuItem>
+                <MenuItem value="Backhoe_Loader_1">Backhoe_Loader_1</MenuItem>
+                <MenuItem value="Dozer_1">Dozer_1</MenuItem>
+                <MenuItem value="Excavator_1">Excavator_1</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="live-parameter-label">Parameter</InputLabel>
+              <Select
+                labelId="live-parameter-label"
+                value={liveParameter}
+                onChange={handleLiveParameterChange}
+              >
+                <MenuItem value="Brake Control">Brake Control</MenuItem>
+                <MenuItem value="Exhaust Gas Temperature">Exhaust Gas Temperature</MenuItem>
+                <MenuItem value="Hydraulic Pump Rate">Hydraulic Pump Rate</MenuItem>
+                <MenuItem value="Level">Level</MenuItem>
+                <MenuItem value="Oil Pressure">Oil Pressure</MenuItem>
+                <MenuItem value="Pedal Sensor">Pedal Sensor</MenuItem>
+                <MenuItem value="Pressure">Pressure</MenuItem>
+                <MenuItem value="Speed">Speed</MenuItem>
+                <MenuItem value="System Voltage">System Voltage</MenuItem>
+                <MenuItem value="Temperature">Temperature</MenuItem>
+                <MenuItem value="Transmission Pressure">Transmission Pressure</MenuItem>
+                <MenuItem value="Water Fuel">Water Fuel</MenuItem>
+                <MenuItem value="Water in Fuel">Water in Fuel</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal" disabled={liveParameter !== 'Temperature'}>
+              <InputLabel id="live-component-label">Component</InputLabel>
+              <Select
+                labelId="live-component-label"
+                value={liveComponent}
+                onChange={handleLiveComponentChange}
+                disabled={liveParameter !== 'Temperature'}
+              >
+                <MenuItem value="Engine">Engine</MenuItem>
+                <MenuItem value="Fuel">Fuel</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Value"
+              type="number"
+              value={liveValue}
+              onChange={handleLiveValueChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseLiveData} color="primary">Cancel</Button>
+            <Button onClick={handleLiveDataSubmit} color="primary">Submit</Button>
+          </DialogActions>
+        </Dialog>
+
       </Box>
     </Box>
   );
